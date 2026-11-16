@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mu Browser (Tabs / Low-RAM)
+Comment=Lightweight multi-tab Qt6 WebEngine browser with session restore
+Exec=/usr/local/bin/mu-browser-tabs
+Icon=mu-browser
+Terminal=false
+Categories=Network;WebBrowser;

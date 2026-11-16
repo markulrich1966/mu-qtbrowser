@@ -1,0 +1,25 @@
+
+# Consider dependencies only in project.
+set(CMAKE_DEPENDS_IN_PROJECT_ONLY OFF)
+
+# The set of languages for which implicit dependencies are needed:
+set(CMAKE_DEPENDS_LANGUAGES
+  )
+
+# The set of dependency files which are needed:
+set(CMAKE_DEPENDS_DEPENDENCY_FILES
+  "" "mu-transparency-test_autogen/timestamp" "custom" "mu-transparency-test_autogen/deps"
+  "/home/mark/AndroidStudioProjects/MU-QTbrowser/test/mu-transparency-test.cpp" "CMakeFiles/mu-transparency-test.dir/mu-transparency-test.cpp.o" "gcc" "CMakeFiles/mu-transparency-test.dir/mu-transparency-test.cpp.o.d"
+  "/home/mark/AndroidStudioProjects/MU-QTbrowser/test/build/mu-transparency-test_autogen/mocs_compilation.cpp" "CMakeFiles/mu-transparency-test.dir/mu-transparency-test_autogen/mocs_compilation.cpp.o" "gcc" "CMakeFiles/mu-transparency-test.dir/mu-transparency-test_autogen/mocs_compilation.cpp.o.d"
+  )
+
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_LINKED_INFO_FILES
+  )
+
+# Targets to which this target links which contain Fortran sources.
+set(CMAKE_Fortran_TARGET_FORWARD_LINKED_INFO_FILES
+  )
+
+# Fortran module output directory.
+set(CMAKE_Fortran_TARGET_MODULE_DIR "")

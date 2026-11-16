@@ -1,0 +1,11 @@
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser-tabs.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser-desktop.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/edit_cache.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/rebuild_cache.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser_autogen_timestamp_deps.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser_autogen.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser-tabs_autogen_timestamp_deps.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser-tabs_autogen.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser-desktop_autogen_timestamp_deps.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/build/CMakeFiles/mu-browser-desktop_autogen.dir

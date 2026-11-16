@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mu Browser (Desktop / Unrestricted)
+Comment=Full-featured unrestricted Qt6 WebEngine desktop browser with password manager & session restore
+Exec=/usr/local/bin/mu-browser-desktop
+Icon=mu-browser
+Terminal=false
+Categories=Network;WebBrowser;

@@ -1,0 +1,5 @@
+/home/mark/AndroidStudioProjects/MU-QTbrowser/test/build/CMakeFiles/mu-transparency-test.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/test/build/CMakeFiles/edit_cache.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/test/build/CMakeFiles/rebuild_cache.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/test/build/CMakeFiles/mu-transparency-test_autogen_timestamp_deps.dir
+/home/mark/AndroidStudioProjects/MU-QTbrowser/test/build/CMakeFiles/mu-transparency-test_autogen.dir

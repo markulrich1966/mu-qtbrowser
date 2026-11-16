@@ -1,0 +1,254 @@
+MU-QTBROWSER CHANGELOG
+==========================
+
+Version 0.1.2 - 2026-11-15
+------------------------------------------
+
+- **Default Homepage & Search:** Set DuckDuckGo (`https://duckduckgo.com`) as the default homepage and start URL across all browser variants (`mu-browser`, `mu-browser-tabs`, `mu-browser-desktop`).
+- **Sidebar Bookmark Button (`★`):** Added descriptive hover text (tooltip `"Bookmarks Menu"`) and integrated a setup dialog toggle (`chkSideBookmarks`) to show/hide the bookmark button in the sidebar.
+- **Unicode System Menu Icons:** Added intuitive Unicode symbols to window system menu items (Minimize `🗕`, Maximize/Restore `🗖`/`🗗`, About `ℹ`, Close `🗙`).
+- **About Dialog In-App Tab Opening:** Clicking links like `schinkenpizza.de` in the About dialog now opens them in a new tab of the currently running browser instance rather than an external browser.
+- **Last Tab Closing Behavior:** Closing the final remaining tab now keeps the browser open and navigates back to the homepage (`https://duckduckgo.com`) instead of exiting the application.
+- **IPC Socket Startup Bug Fix:** Fixed the startup error `mu-browser: Unknown option 'socket'` when running `launch-mu-browser.sh`.
+  - *Cause:* The C++ backend did not register `--socket` in its `QCommandLineParser`, causing it to reject the flag and exit immediately without spawning the UNIX domain socket server.
+  - *Fix:* Added `--socket` as a recognized command line option and implemented a fully functional `QLocalServer` UNIX domain socket server in `mu-browser` to process IPC control commands (`navigate`, `back`, `forward`, `reload`, `toggle-toolbar`, `quit`) from `mu-controller`.
+- **Desktop File Categories:** Updated all `.desktop` launchers to use `Categories=Internet;WebBrowser;` for optimal menu categorization.
+- **Icon Installation Path & Search:** Updated Makefile and C++ application/window icon loading to strictly install and search in `/usr/share/` (`/usr/share/pixmaps/` and `/usr/share/icons/hicolor/scalable/apps/`).
+
+Version 0.1.1 - 2026-11-14 (auf Basis 0.1.0)
+------------------------------------------
+
+Sidebar-Transparenz: Änderung wurde gespeichert, aber optisch nicht angewendet
+- Symptom: Die Sidebar hatte noch die Transparenz der vorherigen Einstellung.
+  Eine Änderung im Dialog änderte optisch nichts, obwohl der neue Wert in der
+  Config stand (z.B. auch auf Extremwerte wie 10 % oder 100 %).
+- Ursache: SideToolbarWidget (DraggableWidget -> QWidget) malt sein
+  Stylesheet-background-color nicht. Das Stylesheet setzte zwar den Wert,
+  aber das Widget malte ihn nie — die Sidebar behielt den alten Hintergrund.
+- Fix (nur applyTransparency(), sonst nichts angefasst): Sidebar-Hintergrund
+  über Palette + setAutoFillBackground(true) statt Stylesheet. Die Buttons
+  behalten ihr Stylesheet (QPushButton malt normal). Im opaken Zweig
+  (alle Transparenzen 100 %) wird autoFillBackground(false) zurückgesetzt.
+- Hinweis: In der 0.1.0 war Mobile/Desktop-Umschaltung (Fenster-Toggle,
+  Interceptor-setMobileMode) und das winmenu-Icon bereits drin — der
+  invokeMethod-Zweig aus den (fälschlich) als v0.1.2/v0.1.3 geführten
+  Zwischenständen war ein Irrweg und ist verworfen. Es wurde nichts neu
+  aufgebaut, nur der Sidebar-Fix ergänzt.
+
+Version 0.1.0 - 2026-11-14
+------------------------------------------
+
+New in v0.1.0 (since 0.0.9, published before):
+
+Mobile/Desktop toggle: sometimes works, sometimes not (global mode + interceptor)
+- Symptom: Toggling Mobile/Desktop worked sometimes, sometimes not.
+  After restart, every tab was Desktop again. Switching tabs showed
+  Desktop even after toggling Mobile.
+- Cause 1: m_isMobileMode was PER-VIEW (each tab had its own flag,
+  starting false) and was NEVER saved. saveConfig() never wrote it,
+  loadConfig() never restored it.
+- Cause 2: toggleMobileMode() only set the profile's User-Agent, but
+  the interceptor runs on EVERY request and overwrote User-Agent with
+  its own rules/fallback (Desktop). The toggle was effectively ignored.
+  "Sometimes works" = only when a UA rule happened to be Mobile for
+  that domain.
+- Fix: Global m_mobileMode in the BrowserWindow, saved in config as
+  "mobileMode". Interceptor gets setMobileMode(bool); its fallback
+  (no UA rule matches) now sends the Mobile UA + Mobile hints when
+  the global mode is on, Desktop otherwise. UA rules still win
+  (e.g. GMX stays Desktop). View toggle delegates to the window's
+  toggle (flips global, updates interceptor, saves config, syncs all
+  views, reloads current view, updates button). New tabs inherit the
+  global mode.
+
+Sidebar top buttons: 2 different icons (Window Menu vs Settings)
+- Both top sidebar buttons used the SAME drawn icon kind "settings",
+  so in drawn-icon mode they looked identical.
+- Fix: Window Menu gets its own kind "winmenu" - a window frame with
+  a title bar and 3 menu lines. Settings keeps "settings" but is now
+  a proper 8-tooth gear (body + 8 teeth + center hole) instead of a
+  plain circle with 4 lines, so the two are clearly distinct.
+- NOTE: The icons only change in DRAWN-ICON mode (Settings ->
+  "Drawn Icons Instead of Letters"). In letter mode the buttons show
+  letters (gear vs wrench), which already differed.
+
+Facebook: Mobile toggle not working (stale facebook.com rule migration)
+- Even after the forced Mobile rule was removed from the defaults,
+  the toggle still did not work for Facebook.
+- Cause: loadUserAgentRules() only PREVENTED adding a facebook.com
+  rule (hasRule check) but never REMOVED one that was already saved
+  in user_agents.json (from older versions that forced Facebook to
+  Mobile). A matching rule always wins over the interceptor fallback,
+  so Facebook stayed Mobile no matter what the toggle said.
+- Fix: loadUserAgentRules() now DELETES any saved facebook.com rule
+  on startup (migration, same pattern as ensureGmxDesktop) and saves
+  the cleaned list back. Facebook now follows the global Mobile/Desktop
+  toggle. The user can still add their own facebook.com rule in
+  Settings if a fixed mode is wanted.
+
+Build fix (v0.1.0): incomplete type + wrong variant in toggleMobileMode()
+- Error 1: "invalid use of incomplete type 'class BrowserWindow'" in
+  CustomWebEngineView::toggleMobileMode(). Cause: CustomWebEngineView
+  is defined BEFORE BrowserWindow, so BrowserWindow is only
+  forward-declared inside the View. Calling
+  m_browserWindow->toggleMobileMode() there cannot compile.
+  Fix: View declares toggleMobileMode() only; the definition is
+  placed AFTER the BrowserWindow class (before int main()), where
+  BrowserWindow is complete.
+- Error 2 (main.cpp only): "'tabWidget' was not declared" and
+  "'currentWebView' was not declared" in BrowserWindow::toggleMobileMode().
+  Cause: The patch detected the variant by searching for the string
+  "tabWidget" - but the settings dialog also has a QTabWidget, so the
+  Main variant (single webView) got the Tabs-style body.
+  Fix: Variant is now detected from the toggleDarkMode() body
+  (pageStackedWidget = Desktop, tabWidget = Tabs, webView only = Main).
+  Main's toggle uses webView only, no tabWidget / currentWebView().
+
+Build fix (v0.1.0, Tabs): 'm_browserWindow' was not declared in scope
+- Error: "error: 'm_browserWindow' was not declared in this scope" in
+  CustomWebEngineView::toggleMobileMode() (main_tabs.cpp).
+- Cause: The Tabs variant names the window pointer member 'm_win'
+  (TabbedBrowserWindow *m_win), not 'm_browserWindow' like
+  Desktop/Main. The out-of-line View definition used the wrong name.
+- Fix: The View definition uses the variant's own member:
+  Tabs = m_win, Desktop/Main = m_browserWindow.
+
+Version 0.0.9 - 2026-11-14
+------------------------------------------
+
+New in v0.0.9:
+
+Context menu
+- The right-click menu is now complete and identical in all three variants
+  (mu-browser, mu-browser-tabs, mu-browser-desktop): Back, Forward, Reload,
+  Open selected text in new tab, Copy, Paste, Open Link in New Tab,
+  Open Image in New Tab, Open in GIMP, Open in mtPaint, Switch to Mobile /
+  Desktop Mode, Add to Bookmarks, Set as Homepage, Browser Settings,
+  Toggle Fullscreen, Toggle Toolbar, Toggle Tabbar, Toggle Dark Mode.
+- The previously declared but never connected toggle signals are now wired
+  up in the tabbed variant: Toggle Toolbar, Toggle Tabbar, Toggle Dark Mode
+  and Mobile Mode actually work from the context menu.
+- The "Use Unicode Symbols in Context Menu" setting now really changes the
+  menu. Before this release the flag was stored but never read when the
+  menu was built, so the menu always showed plain text.
+- Symbols that the menu font cannot render (for example the palette and
+  phone emoji) were replaced with symbols from the Basic Multilingual
+  Plane, so no entry shows up as an empty box any more.
+
+Drawn button icons
+- New setting: "Drawn Icons Instead of Letters for Buttons (u/p/e/m/n ...)".
+  When enabled, the toolbar and side toolbar buttons show small icons
+  that are drawn in code with QPainter instead of single letters. No font,
+  no image file and no resource file is needed, so the icons render the
+  same on every system.
+- The setting is toggleable in the setup dialog and is saved in the config.
+  When disabled, the buttons fall back to their previous letters and
+  symbols (u, p, e, m, n, t, and the arrow / home / reload symbols).
+- The Mobile toggle no longer overwrites the icon with the letter "m (on)"
+  while icon mode is active. Tooltips are unchanged in both modes.
+
+GMX compatibility
+- The request interceptor in the tabbed variant now sends consistent
+  Client Hints (Sec-CH-UA, Sec-CH-UA-Mobile, Sec-CH-UA-Platform) together
+  with the Chrome User-Agent. GMX rejected requests that carried a Chrome
+  User-Agent but no matching Client Hints, which showed up as
+  "error_during_authentication", PPS GET failed: 400 and failed token
+  refresh in the GMX web app.
+- The same full Sec-CH-UA header was added to the Desktop rule and to the
+  fallback branch in mu-browser and mu-browser-desktop, so all three
+  variants now send identical Client Hints.
+- Note: the GMX Content Security Policy that blocks GMX's own fonts from
+  s.uicdn.com is sent by the GMX server itself. It is cosmetic only and
+  is not caused by the browser.
+
+Settings are now saved completely (tabbed variant)
+- The tabbed variant previously saved only five keys (homepage,
+  tabBarPosition, showTabNewTab, clock24h, useButtonIcons). Everything
+  else set in the dialog was lost on restart, including the side toolbar
+  visibility and all side toolbar and main toolbar toggles.
+- loadConfig() and saveConfig() in the tabbed variant now cover all 42
+  settings, matching the desktop variant: homepage, clock and notes
+  commands, dark mode, unicode icons, button icons, frameless, strict
+  privacy, widths, default / UI / tab zoom, toolbar and tab bar position,
+  side toolbar visibility and every main toolbar and side toolbar toggle.
+- The Default Zoom and UI Zoom values from the dialog are now actually
+  applied in the tabbed variant. Before this release the dialog values
+  were read but never assigned, so the zoom settings had no effect.
+- Verified for all three variants: every value the settings dialog
+  assigns has a matching save key and a matching load key. There are no
+  remaining gaps.
+
+Build fixes
+- Fixed "QPainter has initializer but incomplete type" by adding the
+  missing #include <QPainter> in all three source files.
+- Fixed invalid universal characters: UTF-16 surrogate halves such as
+  \uD83D\uDCCB are not valid C++ \u escapes. Emoji above U+FFFF are
+  now written as eight-digit \U0001F4CB escapes, and the remaining
+  symbols use Basic Multilingual Plane code points.
+- Replaced qDegreesToRadians / qSin / qSin in the gear icon with fixed
+  line coordinates, so no QtMath include is required.
+
+
+Version 0.0.8 - 2025-02-23
+------------------------------------------
+
+New in v0.0.8:
+
+- Left side toolbar: new tab button ("t"), separated by spacing and
+  configurable in settings.
+- Tab bar placement: option to place the tab bar at the bottom of the
+  window, below the web content.
+- New tab button ("+") directly beside the tabs in the tab bar, with a
+  settings toggle to hide or show it.
+- Left side toolbar buttons: descriptive tooltips (hover text) for all
+  buttons.
+- Password manager controls split into independent toggles: one for the
+  saved passwords dropdown list, one for the action buttons (u, p, e).
+- Left side toolbar: dedicated Settings button at the top.
+- Clock: 12/24-hour format toggle in settings. The 12-hour display shows
+  no AM/PM suffix.
+- Desktop files: moved to the desktop-files/ subfolder, configured with
+  Exec=env QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox". Added
+  "make pet-desktopfiles" to package only the desktop files and run
+  fixmenus via pinstall.sh.
+
+Clean text labels
+- Toolbar and side toolbar buttons use clean lowercase text without
+  brackets: u, p, e, m, n. (Superseded in v0.0.9 by the optional drawn
+  button icons, see above.)
+
+Vertical left side toolbar and IceWM stability
+- The left side pseudo-titlebar (SideToolbarWidget) supports click and
+  drag to move frameless windows.
+- IceWM freeze fix: double-click events on the left side bar are
+  intercepted and absorbed, so the IceWM window manager no longer freezes.
+- Dynamic spacing: the vertical layout uses expanding stretch spacers, so
+  the spacing between button groups scales smoothly with window height.
+- Configurable side toolbar buttons: settings checkboxes toggle each side
+  toolbar button individually (window menu, settings, reload, back /
+  forward, home, password manager, mobile toggle, notes, new tab).
+
+Main toolbar positioning
+- The main toolbar can be placed in one of three positions: Top (above
+  the tab bar), Middle (below the tab bar, above the web page), Bottom
+  (below the web page, at the very bottom of the window).
+
+Categorized setup dialog (QTabWidget)
+- The BrowserSettingsDialog is organized into five tabs:
+  - General: homepage, clock command, 12/24h clock toggle, notes command,
+    default zoom, minimum widths.
+  - Layout and Positioning: toolbar position (Top / Middle / Bottom),
+    tab bar position (Top / Bottom), frameless window option, left side
+    toolbar toggle, scaling.
+  - Main Toolbar Elements: visibility toggles for all main toolbar
+    components, including the separated password list and action buttons.
+  - Left Side Toolbar Buttons: visibility toggles for all side toolbar buttons.
+  - Privacy and Storage: strict privacy flags, dark mode, unicode context
+    menu, and a one-click "Clear WebStorage and Cookies (GMX Fix)" tool.
+
+GMX technical error fix (gmx.net / gmx.de)
+- Persistent cookies, LocalStorage, IndexedDB, WebGL and cross-origin
+  access flags are enabled in the WebEngine settings to reduce GMX
+  WebSocket and session token errors.
+- One-click WebStorage reset tool in setup to clear stale GMX session
+  tokens.

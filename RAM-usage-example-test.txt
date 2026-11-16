@@ -1,0 +1,71 @@
+here are some numbers from a test.
+
+Ryzen 3 4300U, 16 GB RAM
+
+After starting to Icewm using sddm:
+1.12 GB
+
+Running mu-browser-desktop with Whatsapp, 2xPuppyforum, google news, Facebook, scrolling down, down, down
+3.5 GB
+This seems to be currently the maximum
+
+running:
+sync
+sudo sysctl -w vm.drop_caches=3
+
+it drops to 2,.9 GB
+
+closing facebook
+drops to 2.31 GB
+
+closing facebook, then browser
+1.34 GB
+
+clear cache
+1.18 GB
+
+start browser again whatsapp, google news, 2x puppyforum
+
+2.23 GB
+open facebook
+2.89 GB
+
+scroll a lot in FB
+3.65 GB
+
+open in addition an AI SF-Movie in Full-HD in youtube:
+3.9 GB
+
+close Facebook
+3.16 GB
+
+close Youtube
+2.99 GB
+
+Clear Cache
+2.12 GB
+
+start youtube again:
+2.56 GB
+
+Now, Muppy uses 217 MB instead of 1.12 GB at startup.
+
+So the max memory used would there be 3.9 GB-900 MB = 3 GB.
+
+So on Muppy you would be able to run all the apove on 4 GB of RAM without swapping.
+
+On a 2 GB machine, you could watch youtube in Full-HD using OpenGL using 1.7 GB using Muppy.
+
+The biggest challenge would be facebook, as it would use approx 2.3 GB up to 2.8 GB in Muppy.
+So for Facebook you definately would need swap to avoid a system freeze.
+
+The values might be slightly better using the other 2 versions included, single window and tabbed.
+
+Summary:
+On a low memory Linux system with 2 GB of RAM, you can use the browser, even for Youtube.
+You definately though should not use the "desktop" version and focus on 1-4 tabs at a time depending on the webpages.
+
+Facebook in theory will work if you have 2 GB of SWAP, but I doubt it will be "comfortable" when swapping.
+So either use your mobile phone for Facebook, or try to get a cheap PC with 4 GB minimum.
+
+

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mu Browser (Standalone)
+Comment=Lightweight Qt6 WebEngine browser container
+Exec=env QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox" mu-browser
+Icon=mu-browser
+Terminal=false
+Categories=Internet;WebBrowser;

@@ -1,0 +1,8 @@
+Package: mu-qtbrowser
+Version: 0.1.2
+Section: web
+Priority: optional
+Architecture: amd64
+Depends: libqt6webenginewidgets6, libgtk-3-0, libglib2.0-0, libx11-6
+Maintainer: Mark Ulrich <mark@schinkenpizza.de>
+Description: Modular IPC-coupled Qt6 WebEngine container with GTK3 controller and low-RAM tabbed variant.

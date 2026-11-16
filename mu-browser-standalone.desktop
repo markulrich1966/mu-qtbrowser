@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mu Browser (Standalone)
+Comment=Lightweight Qt6 WebEngine browser container
+Exec=/usr/local/bin/mu-browser
+Icon=mu-browser
+Terminal=false
+Categories=Network;WebBrowser;

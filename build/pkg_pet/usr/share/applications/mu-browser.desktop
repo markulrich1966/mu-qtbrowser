@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mu Browser (IPC Coupled)
+Comment=Modular Qt6 WebEngine container with Vala/GTK3 controller
+Exec=env QTWEBENGINE_CHROMIUM_FLAGS="--no-sandbox" /usr/local/bin/launch-mu-browser.sh
+Icon=mu-browser
+Terminal=false
+Categories=Internet;WebBrowser;

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Mu Browser (IPC Coupled)
+Comment=Modular Qt6 WebEngine container with Vala/GTK3 controller
+Exec=/usr/local/bin/launch-mu-browser.sh
+Icon=mu-browser
+Terminal=false
+Categories=Network;WebBrowser;
