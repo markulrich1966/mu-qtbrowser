@@ -186,7 +186,7 @@
 #define __cpp_initializer_lists 200806L
 #define __FLT32_MAX_EXP__ 128
 #define ABI_ID "ELF"
-#define MU_VERSION "0.1.2"
+#define MU_VERSION "0.1.3"
 #define __cpp_hex_float 201603L
 #define __GXX_ABI_VERSION 1018
 #define __FLT_MIN_EXP__ (-125)

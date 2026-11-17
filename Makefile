@@ -6,7 +6,7 @@ ICONDIR ?= /usr/share/icons/hicolor/scalable/apps
 
 # VERSION aus dem Makefile -> About-Dialog: wird als -DMU_VERSION
 # an CMake weitergereicht (CMakeLists setzt daraus MU_VERSION).
-VERSION ?= 0.1.2
+VERSION ?= 0.1.3
 ARCH ?= amd64
 PET_ARCH ?= x86_64
 PKG_NAME := mu-qtbrowser

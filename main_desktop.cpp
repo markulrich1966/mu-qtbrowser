@@ -676,6 +676,12 @@ protected:
                 connect(openImgAction, &QAction::triggered, this, [this, mediaUrl]() {
                     emit openUrlInNewTabRequested(mediaUrl.toString());
                 });
+                QAction *copyImgAction = menu.addAction(lbl("\u29C9", "Copy Image"), this, [this]() {
+                    triggerPageAction(QWebEnginePage::CopyImageToClipboard);
+                });
+                QAction *saveImgAction = menu.addAction(lbl("\U0001F4BE", "Save Image"), this, [this]() {
+                    triggerPageAction(QWebEnginePage::DownloadImageToDisk);
+                });
 
                 auto openInExternalEditor = [mediaUrl](const QString &program) {
                     QString targetPath;
@@ -720,6 +726,170 @@ protected:
                     openInExternalEditor("mtpaint");
                 });
             }
+        }
+
+        if (contextData && contextData->mediaType() == QWebEngineContextMenuRequest::MediaTypeVideo) {
+            QUrl mediaUrl = contextData->mediaUrl();
+            if (mediaUrl.isValid()) {
+                menu.addSeparator();
+                QAction *openVideoAction = menu.addAction(lbl("\U0001F3A5", "Open Video in New Tab"));
+                connect(openVideoAction, &QAction::triggered, this, [this, mediaUrl]() {
+                    emit openUrlInNewTabRequested(mediaUrl.toString());
+                });
+                QAction *saveVideoAction = menu.addAction(lbl("\U0001F4BE", "Save Video"), this, [this, mediaUrl]() {
+                    QString defaultName = QFileInfo(mediaUrl.path()).fileName();
+                    if (defaultName.isEmpty()) defaultName = "video.mp4";
+                    QString savePath = QFileDialog::getSaveFileName(this, "Save Video As", QDir::homePath() + "/" + defaultName, "Video Files (*.mp4 *.webm *.ogg *.mkv *.avi);;All Files (*.*)");
+                    if (!savePath.isEmpty()) {
+                        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+                        QNetworkRequest request(mediaUrl);
+                        QNetworkReply *reply = manager->get(request);
+                        QMessageBox *progressBox = new QMessageBox(QMessageBox::Information, "Downloading Video", "Downloading video from:\n" + mediaUrl.toString() + "\nPlease wait...", QMessageBox::NoButton, this);
+                        progressBox->setStandardButtons(QMessageBox::Cancel);
+                        connect(progressBox, &QMessageBox::buttonClicked, reply, &QNetworkReply::abort);
+                        progressBox->show();
+
+                        connect(reply, &QNetworkReply::finished, this, [reply, savePath, progressBox]() {
+                            progressBox->deleteLater();
+                            if (reply->error() == QNetworkReply::NoError) {
+                                QFile file(savePath);
+                                if (file.open(QIODevice::WriteOnly)) {
+                                    file.write(reply->readAll());
+                                    file.close();
+                                    QMessageBox::information(nullptr, "Success", "Video saved successfully to:\n" + savePath);
+                                } else {
+                                    QMessageBox::warning(nullptr, "Error", "Could not write file to:\n" + savePath);
+                                }
+                            } else if (reply->error() != QNetworkReply::OperationCanceledError) {
+                                QMessageBox::warning(nullptr, "Error", "Failed to download video: " + reply->errorString());
+                            }
+                            reply->deleteLater();
+                        });
+                    }
+                });
+
+                QAction *vlcAction = menu.addAction(lbl("\U0001F3AC", "Open in VLC"));
+                connect(vlcAction, &QAction::triggered, this, [mediaUrl]() {
+                    if (!QProcess::startDetached("vlc", QStringList() << mediaUrl.toString())) {
+                        QMessageBox::warning(nullptr, "Error", "Could not open in VLC. Make sure VLC is installed.");
+                    }
+                });
+
+                QAction *mpvAction = menu.addAction(lbl("\U0001F3A5", "Open in MPV"));
+                connect(mpvAction, &QAction::triggered, this, [mediaUrl]() {
+                    if (!QProcess::startDetached("mpv", QStringList() << mediaUrl.toString())) {
+                        QMessageBox::warning(nullptr, "Error", "Could not open in MPV. Make sure MPV is installed.");
+                    }
+                });
+            }
+        }
+
+        menu.addSeparator();
+
+        QAction *findVideoAction = menu.addAction(lbl("\U0001F50D", "Find & Save Video..."));
+        connect(findVideoAction, &QAction::triggered, this, [this]() {
+            page()->runJavaScript(R"(
+                (function() {
+                    let urls = [];
+                    document.querySelectorAll('video').forEach(v => {
+                        if (v.src) urls.push(v.src);
+                        v.querySelectorAll('source').forEach(s => { if (s.src) urls.push(s.src); });
+                    });
+                    document.querySelectorAll('source, embed, object').forEach(el => {
+                        if (el.src) urls.push(el.src);
+                    });
+                    return Array.from(new Set(urls));
+                })();
+            )", [this](const QVariant &result) {
+                QVariantList list = result.toList();
+                if (list.isEmpty()) {
+                    QMessageBox::information(this, "Find & Save Video", "No video sources found on this page.");
+                    return;
+                }
+                QString chosen;
+                if (list.size() == 1) {
+                    chosen = list.first().toString();
+                } else {
+                    QStringList items;
+                    for (const auto &v : list) items.append(v.toString());
+                    bool ok = false;
+                    chosen = QInputDialog::getItem(this, "Find & Save Video", "Select video to download:", items, 0, false, &ok);
+                    if (!ok || chosen.isEmpty()) return;
+                }
+
+                if (!chosen.isEmpty()) {
+                    QUrl targetUrl(chosen);
+                    QString defaultName = QFileInfo(targetUrl.path()).fileName();
+                    if (defaultName.isEmpty()) defaultName = "video.mp4";
+                    QString savePath = QFileDialog::getSaveFileName(this, "Save Video As", QDir::homePath() + "/" + defaultName, "Video Files (*.mp4 *.webm *.ogg *.mkv *.avi);;All Files (*.*)");
+                    if (!savePath.isEmpty()) {
+                        QNetworkAccessManager *manager = new QNetworkAccessManager(this);
+                        QNetworkRequest request(targetUrl);
+                        QNetworkReply *reply = manager->get(request);
+                        QMessageBox *progressBox = new QMessageBox(QMessageBox::Information, "Downloading Video", "Downloading video from:\n" + chosen + "\nPlease wait...", QMessageBox::NoButton, this);
+                        progressBox->setStandardButtons(QMessageBox::Cancel);
+                        connect(progressBox, &QMessageBox::buttonClicked, reply, &QNetworkReply::abort);
+                        progressBox->show();
+
+                        connect(reply, &QNetworkReply::finished, this, [reply, savePath, progressBox]() {
+                            progressBox->deleteLater();
+                            if (reply->error() == QNetworkReply::NoError) {
+                                QFile file(savePath);
+                                if (file.open(QIODevice::WriteOnly)) {
+                                    file.write(reply->readAll());
+                                    file.close();
+                                    QMessageBox::information(nullptr, "Success", "Video saved successfully to:\n" + savePath);
+                                } else {
+                                    QMessageBox::warning(nullptr, "Error", "Could not write file to:\n" + savePath);
+                                }
+                            } else if (reply->error() != QNetworkReply::OperationCanceledError) {
+                                QMessageBox::warning(nullptr, "Error", "Failed to download video: " + reply->errorString());
+                            }
+                            reply->deleteLater();
+                        });
+                    }
+                }
+            });
+        });
+
+        QAction *ytdlpAction = menu.addAction(lbl("\U0001F4E5", "Download with yt-dlp..."));
+        connect(ytdlpAction, &QAction::triggered, this, [this]() {
+            QString pageUrl = url().toString();
+            QString defaultName = "video.mp4";
+            QString savePath = QFileDialog::getSaveFileName(this, "Download Video with yt-dlp", QDir::homePath() + "/" + defaultName, "Video Files (*.mp4 *.webm *.mkv);;All Files (*.*)");
+            if (!savePath.isEmpty()) {
+                QString termProg = "xterm";
+                if (!QStandardPaths::findExecutable("xterm").isEmpty()) {
+                    termProg = "xterm";
+                } else if (!QStandardPaths::findExecutable("urxvt").isEmpty()) {
+                    termProg = "urxvt";
+                } else if (!QStandardPaths::findExecutable("rxvt").isEmpty()) {
+                    termProg = "rxvt";
+                } else if (!QStandardPaths::findExecutable("lxterminal").isEmpty()) {
+                    termProg = "lxterminal";
+                } else if (!QStandardPaths::findExecutable("x-terminal-emulator").isEmpty()) {
+                    termProg = "x-terminal-emulator";
+                }
+                QStringList args;
+                args << "-e" << QString("yt-dlp --no-playlist -o \"%1\" \"%2\"; echo; echo 'Press Enter to close terminal...'; read").arg(savePath).arg(pageUrl);
+                QProcess::startDetached(termProg, args);
+            }
+        });
+
+        if (url().toString().contains("youtube.com") || url().toString().contains("youtu.be")) {
+            menu.addSeparator();
+            QAction *vlcPageAction = menu.addAction(lbl("\U0001F3AC", "Play YouTube in VLC"));
+            connect(vlcPageAction, &QAction::triggered, this, [this]() {
+                if (!QProcess::startDetached("vlc", QStringList() << url().toString())) {
+                    QMessageBox::warning(nullptr, "Error", "Could not open in VLC. Make sure VLC is installed.");
+                }
+            });
+            QAction *mpvPageAction = menu.addAction(lbl("\U0001F3A5", "Play YouTube in MPV"));
+            connect(mpvPageAction, &QAction::triggered, this, [this]() {
+                if (!QProcess::startDetached("mpv", QStringList() << url().toString())) {
+                    QMessageBox::warning(nullptr, "Error", "Could not open in MPV. Make sure MPV is installed.");
+                }
+            });
         }
 
         menu.addSeparator();
@@ -1588,6 +1758,7 @@ signals:
 class DesktopBrowserWindow : public QWidget {
     Q_OBJECT
 public:
+    bool hasSavedGeometry() const { return !m_windowGeometry.isEmpty(); }
     DesktopBrowserWindow(const QString &initialUrl, QWebEngineProfile *profile, MuRequestInterceptor *interceptor,
                          bool frameless, bool hideToolbar, const QString &layer, QWidget *parent = nullptr)
         : QWidget(parent), m_profile(profile), m_interceptor(interceptor), m_isFrameless(frameless), m_hideToolbar(hideToolbar), m_layer(layer),
@@ -3309,7 +3480,7 @@ private:
         tabJumpCombo->clear();
         for (int i = 0; i < tabBarWidget->count(); ++i) {
             QString tabText = tabBarWidget->tabText(i);
-            tabJumpCombo->addItem(QString("[%1] %2").arg(i + 1).arg(tabText));
+            tabJumpCombo->addItem(QString("%1| %2").arg(i + 1).arg(tabText));
         }
         tabJumpCombo->setCurrentIndex(tabBarWidget->currentIndex());
         m_updatingTabsCombo = false;
@@ -4035,7 +4206,9 @@ int main(int argc, char *argv[]) {
     app.setWindowIcon(appIcon);
     window.setWindowIcon(appIcon);
 
-    window.resize(1280, 720);
+    if (!window.hasSavedGeometry()) {
+        window.resize(1280, 720);
+    }
     window.show();
     return app.exec();
 }
